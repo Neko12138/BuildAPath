@@ -3,6 +3,8 @@ class Path extends Phaser.Scene {
     graphics;
     curve;
     path;
+    runMode;
+
 
     constructor(){
         super("pathMaker");
@@ -47,7 +49,7 @@ class Path extends Phaser.Scene {
 
         // TODO:
         //  - set the run mode flag to false (after implenting run mode)
-
+        this.runMode = false;
         // Create enemyShip as a follower type of sprite
         // Call startFollow() on enemyShip to have it follow the curve
         my.sprite.enemyShip = this.add.follower(this.curve, 10, 10, "enemyShip");
@@ -88,21 +90,30 @@ class Path extends Phaser.Scene {
 
     update() {
 
-        if (Phaser.Input.Keyboard.JustDown(this.ESCKey)) {
+        if (Phaser.Input.Keyboard.JustDown(this.ESCKey)) {//todo done
             console.log("Clear path");
+            if (this.runMode === true) {
+                console.warn("in run mode!!!");
+            } else {
+                this.clearPoints();
+            }
             // TODO: 
             // * Add code to check if run mode is active
             //   If run mode is active, then don't call clearPoints()
             //   (i.e., can only clear points when not in run mode)
 
-            this.clearPoints();
-
         }
 
 
 
-        if (Phaser.Input.Keyboard.JustDown(this.oKey)) {
+        if (Phaser.Input.Keyboard.JustDown(this.oKey)) {//todo is done
             console.log("Output the points");
+            let output = "[\n";
+            for (let point of this.curve.points) {
+                output += `  ${point.x}, ${point.y},\n`;
+            }
+            output += "]";
+            console.log(output);
 
             // TODO:
             // * Print out the points comprising the line
@@ -119,10 +130,43 @@ class Path extends Phaser.Scene {
 
         if (Phaser.Input.Keyboard.JustDown(this.rKey)) {
             console.log("Run mode");
+            //change the run mode
+            this.runMode = !this.runMode;
+            // Check for runMode active
+            if (this.runMode) {
+            // if no points to follow
+                if (this.curve.points.length === 0) {
+                    console.warn("no points");
+                    this.runMode = false;
+                    return;
+                }
+                // put ship at the start of path
+                let start = this.curve.points[0];
+                my.sprite.enemyShip.setPosition(start.x, start.y);
+                my.sprite.enemyShip.visible = true;
+
+                //follow the path
+                my.sprite.enemyShip.startFollow({
+                    from: 0,
+                    to: 1,
+                    delay: 0,
+                    duration: 2000,
+                    ease: 'Sine.easeInOut',
+                    repeat: -1,
+                    yoyo: true,
+                    rotateToPath: true,
+                    rotationOffset: -90
+                });
+
+            }   else {
+                    // stop
+                    my.sprite.enemyShip.stopFollow();
+                    my.sprite.enemyShip.visible = false;
+            }
             //
             // TODO: 
             // Implement run mode
-            // Check for runMode active
+            
             //   If active:
             //   - call stopFollow on the enemyShip to halt following behavior
             //   - make the enemyShip sprite invisible
